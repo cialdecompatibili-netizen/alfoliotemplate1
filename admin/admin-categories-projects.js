@@ -1,4 +1,4 @@
-/* Categorie progetti: elenco, rinomina/unisci, elimina, mostra/togli dalla pagina Progetti. Vedi claude.md > "Categorie progetti".
+/* Categorie progetti: elenco, rinomina/unisci, elimina, mostra/togli dalla pagina Progetti e ordine (frecce). Vedi claude.md > "Categorie progetti".
    COME FUNZIONANO (diverso dalle categorie degli articoli, che stanno in admin-categories.js):
    - Ogni progetto ha UN campo 'category: nome' (singolare, UNA parola) nel front matter. Non esiste un elenco proprio: la categoria esiste perche' un progetto la usa.
    - La pagina pubblica _pages/projects.md mostra SOLO le categorie scritte in 'display_categories: [a, b]' nel proprio front matter, nell'ordine dell'elenco, e solo se
@@ -40,6 +40,12 @@
   /* la pagina divide davvero per categoria e l'admin sa riscriverla? Solo allora ha senso Mostra/Togli e l'avviso sui progetti senza categoria */
   function uses() { return !!(CATS_ON && PG && !PG.bad && PG.list); }
   function needOk() { if (PG && PG.bad) throw new Error(PG.bad); }
+
+  /* frecce su/giu' di una categoria della pagina: pos = posto attuale, n = quante sono in pagina. La freccia e' spenta ai due estremi. */
+  function mv(q, pos, n) {
+    function b(d, txt, off) { return '<button class="btn sm"' + (off ? ' disabled' : ' onclick="A.pcMove(\'' + q + '\',' + d + ')"') + ' title="' + (d < 0 ? 'Sposta su' : 'Sposta gi\u00f9') + ' nella pagina Progetti">' + txt + '</button>'; }
+    return b(-1, '\u2191', pos <= 0) + b(1, '\u2193', pos >= n - 1);
+  }
 
   function load() {
     return A.getDir(DIR).then(function (l) {
@@ -83,21 +89,22 @@
       var c = counts(), seen = {}, names = [], inList = {}, list = (PG && PG.list) || [];
       list.forEach(function (n) { inList[n] = 1; if (!seen[n]) { seen[n] = 1; names.push(n); } }); /* prima le categorie della pagina, nel suo ordine */
       Object.keys(c).sort().forEach(function (n) { if (!seen[n]) { seen[n] = 1; names.push(n); } });
+      var ord = names.filter(function (n) { return inList[n]; }); /* solo quelle in pagina, nell'ordine di display_categories: servono alle frecce */
       var h = '<h2>Categorie progetti</h2>';
       if (PG && PG.bad) h += '<div class="card"><p style="color:#b32d2e"><b>Attenzione:</b> ' + esc(PG.bad) + '</p></div>';
       else if (!PG) h += note('Non trovo la pagina Progetti (_pages/projects.md): puoi rinominare ed eliminare le categorie, ma non scegliere quali mostrare nella pagina.');
       else if (!CATS_ON) h += note('Le categorie dei progetti sono spente nelle impostazioni del sito: la pagina Progetti mostra tutti i progetti insieme, senza dividerli.');
       else if (!PG.list) h += note('La pagina Progetti non divide i progetti per categoria: li mostra tutti insieme. Le categorie servono solo a tenerli in ordine.');
       h += '<div class="card"><p>Le categorie sono i titoli in cui e\' divisa la pagina Progetti del sito. Una categoria nasce quando la dai a un progetto (Modifica, oppure spunta i progetti nell\'elenco e premi Categoria...). Qui puoi rinominarla, unirla a un\'altra (rinomina con il nome dell\'altra), eliminarla' +
-        (uses() ? ' e scegliere quali mostrare nella pagina' : '') + '. Ogni azione e\' un solo salvataggio.</p><div class="list">';
+        (uses() ? ' e scegliere quali mostrare nella pagina e in che ordine (frecce)' : '') + '. Ogni azione e\' un solo salvataggio.</p><div class="list">';
       if (!names.length) h += '<div class="it"><span>Nessuna categoria usata.</span></div>';
       names.forEach(function (n) {
-        var cnt = c[n] || 0, shown = !!inList[n], q = A.jq(n);
+        var cnt = c[n] || 0, shown = !!inList[n], q = A.jq(n), pos = ord.indexOf(n);
         var st = cnt ? pl(cnt, 'progetto', 'progetti') : 'nessun progetto';
         var warn = false;
         if (uses()) { if (shown) st += ' \u00b7 visibile nella pagina Progetti'; else { st += ' \u00b7 NON visibile nella pagina Progetti'; warn = cnt > 0; } }
         h += '<div class="it"><span>' + esc(n) + '<small' + (warn ? ' style="color:#b32d2e"' : '') + '>' + esc(st) + '</small></span>' +
-          (uses() ? '<button class="btn sm" onclick="A.pcToggle(\'' + q + '\',' + (shown ? 'false' : 'true') + ')">' + (shown ? 'Togli dalla pagina' : 'Mostra nella pagina') + '</button>' : '') +
+          (uses() && shown ? mv(q, pos, ord.length) : '') + (uses() ? '<button class="btn sm" onclick="A.pcToggle(\'' + q + '\',' + (shown ? 'false' : 'true') + ')">' + (shown ? 'Togli dalla pagina' : 'Mostra nella pagina') + '</button>' : '') +
           '<button class="btn sm" onclick="A.pcRen(\'' + q + '\')">Rinomina</button>' +
           '<button class="btn sm danger" onclick="A.pcDel(\'' + q + '\')">Elimina</button></div>';
       });
@@ -156,5 +163,19 @@
     });
     if (!nl) return;
     return commit([], nl, 'admin: pagina progetti ' + (on ? 'mostra ' : 'togli ') + n).then(function () { A.toast(on ? 'Ora e\' nella pagina Progetti (pubblicazione in corso)' : 'Tolta dalla pagina Progetti (pubblicazione in corso)'); A.go('pcats'); });
+  });
+
+  /* Sposta una categoria su (d = -1) o giu' (d = +1) nella pagina Progetti. L'ordine e' quello di 'display_categories' (ogni categoria e' un titolo nella pagina, dall'alto in basso):
+     si scambia con la vicina e basta, i progetti non si toccano. Ogni clic = un commit = un deploy: per spostare di molti posti conviene aspettare il pallino verde tra un clic e l'altro. */
+  A.pcMove = A.wrap(function (n, d) {
+    needOk();
+    var nl = listAfter(function (l) {
+      var i = l.indexOf(n), j = i + d;
+      if (i < 0 || j < 0 || j >= l.length) return l;
+      var x = l[i]; l[i] = l[j]; l[j] = x;
+      return l;
+    });
+    if (!nl) return;
+    return commit([], nl, 'admin: ordine categorie progetti (' + n + (d < 0 ? ' su' : ' gi\u00f9') + ')').then(function () { A.toast('Ordine cambiato (pubblicazione in corso)'); A.go('pcats'); });
   });
 })(A);
