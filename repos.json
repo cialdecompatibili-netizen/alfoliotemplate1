@@ -8,13 +8,6 @@
       "baseurl": "auto",
       "etichetta": "TEST",
       "protetto": false
-    },
-    "prod": {
-      "dir": "../crazyweb4",
-      "remoto": "cialdecompatibili-netizen/crazyweb4",
-      "baseurl": "/crazyweb4",
-      "etichetta": "PROD",
-      "protetto": true
     }
   },
   "sito": {
