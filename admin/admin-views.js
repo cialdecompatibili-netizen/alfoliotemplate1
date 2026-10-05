@@ -413,7 +413,7 @@
       '<small style="display:block;margin:0 0 14px;color:#787c82">Si salva ma non e\' visibile sul sito: sparisce da elenchi, menu, ricerca e Google. Togli la spunta per pubblicarlo.</small>';
   };
   /* ---- ELENCHI: RICERCA / FILTRI / ORDINE (Articoli, Progetti, Servizi, News) ----------------------------------------------
-     Come WordPress: barra sopra l'elenco con ricerca, stato, categoria (solo Articoli) e ordine. L'elenco legge il contenuto di TUTTI i file
+     Come WordPress: barra sopra l'elenco con ricerca, stato, categoria (Articoli e Progetti) e ordine. L'elenco legge il contenuto di TUTTI i file
      con A.getFiles (UNA query GraphQL a blocchi di 100 + cache per sha: la prima apertura costa 1 richiesta, poi 0 per i file invariati) e
      tiene le righe in A.LST[chiave]. Ricerca, filtri, ordine e paginazione lavorano su quella copia: nessuna richiesta mentre scrivi.
      Occhio, stella e casetta aggiornano la copia con A.lstUpd (e la rimettono a posto se il salvataggio fallisce).
@@ -460,7 +460,7 @@
     var isSrv = key === 'servizi' || key === 'projects', n = esc(r.name);
     var home = isSrv ? '<button class="btn sm home' + (r.home ? ' on' : '') + '" data-n="' + n + '" data-k="' + key + '" title="' + (r.home ? 'In home page: clic per togliere' : 'Mostra in home page') + '" onclick="A.inHome(\'' + n + '\',' + (r.home ? 'false' : 'true') + ',this,\'' + key + '\')">&#127968;</button>' : '';
     var star = key === 'posts' ? '<button class="btn sm star' + (r.feat ? ' on' : '') + '" data-n="' + n + '" title="' + (r.feat ? 'In evidenza: clic per togliere' : 'Metti in evidenza (in alto nel blog)') + '" onclick="A.feature(\'' + n + '\',' + (r.feat ? 'false' : 'true') + ',this)">' + (r.feat ? '&#9733;' : '&#9734;') + '</button>' : '';
-    var catB = key === 'posts' ? '<em style="font-style:normal;font-size:.8em;white-space:nowrap;margin:0 .6em;padding:1px 9px;border-radius:10px;background:rgba(127,127,127,.18);' + (r.cats.length ? '' : 'opacity:.55;') + '" title="Categoria (la prima decide l\'URL)">' + (r.cats.length ? esc(r.cats.join(', ')) : 'senza categoria') + '</em>' : '';
+    var catB = (key === 'posts' || key === 'projects') ? '<em style="font-style:normal;font-size:.8em;white-space:nowrap;margin:0 .6em;padding:1px 9px;border-radius:10px;background:rgba(127,127,127,.18);' + (r.cats.length ? '' : 'opacity:.55;') + '" title="' + (key === 'posts' ? 'Categoria (la prima decide l\'URL)' : 'Categoria del progetto') + '">' + (r.cats.length ? esc(r.cats.join(', ')) : 'senza categoria') + '</em>' : '';
     var eye = (key === 'posts' || key === 'projects' || key === 'servizi') ? A.eyeBtn(r.name, !!r.hid, key) : '';
     /* la casella esiste solo se admin-bulk.js e' caricato (A.bulkBar): se quel file manca o da' errore l'elenco funziona come prima. Il nome file e' l'identita' della riga (A.sel[key][nome]). */
     var chk = A.bulkBar ? '<input type="checkbox" style="width:auto;margin:0 8px 0 0;flex:none" title="Seleziona"' + ((A.sel[key] || {})[r.name] ? ' checked' : '') + ' onchange="A.selTog(\'' + key + '\',\'' + n + '\',this.checked)">' : '';
@@ -489,7 +489,7 @@
     if (key === 'posts' || key === 'projects' || key === 'servizi') {
       h += sel('st', opt('', 'Tutti', f.st) + opt('vis', 'Visibili', f.st) + opt('hid', 'Nascosti', f.st) + (key === 'posts' ? opt('feat', 'In evidenza', f.st) : opt('home', 'In home', f.st)));
     }
-    if (key === 'posts') {
+    if (key === 'posts' || key === 'projects') {
       var cc = {}, none = 0;
       L.forEach(function (r) { if (!r.cats.length) none++; r.cats.forEach(function (c) { cc[c] = (cc[c] || 0) + 1; }); });
       h += sel('cat', opt('', 'Tutte le categorie', f.cat) + Object.keys(cc).sort().map(function (c) { return opt(c, c + ' (' + cc[c] + ')', f.cat); }).join('') + (none ? opt('__none', 'Senza categoria (' + none + ')', f.cat) : ''));
@@ -511,7 +511,7 @@
               hid: /^published:[ \t]*false\b/m.test(fm0), home: /^in_home:[ \t]*true\b/m.test(fm0), feat: /^featured:[ \t]*true\b/m.test(fm0)
             };
           });
-          M().innerHTML = '<h2>' + cfg.label + ' <button class="btn primary sm" onclick="A.edit(\'' + cfg.key + '\')">+ Nuovo</button></h2><div class="card list">' + lstBar(cfg.key) + '<div id="bulk_' + cfg.key + '"></div><div id="lst_' + cfg.key + '"></div></div>';
+          M().innerHTML = '<h2>' + cfg.label + ' <button class="btn primary sm" onclick="A.edit(\'' + cfg.key + '\')">+ Nuovo</button>' + (cfg.key === 'projects' ? ' <button class="btn sm" onclick="A.go(\'pcats\')">Categorie</button>' : '') + '</h2><div class="card list">' + lstBar(cfg.key) + '<div id="bulk_' + cfg.key + '"></div><div id="lst_' + cfg.key + '"></div></div>';
           A.lstRender(cfg.key);
         });
       });
