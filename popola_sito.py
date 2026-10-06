@@ -113,7 +113,12 @@ def main():
                 args += ['--in-home']
             esegui(f'{mod} crea {s}', *args)
 
-    print('\n'.join(log))
+    # output minimo (regola risparmio token): solo il riepilogo per tipo di operazione, gli errori fermano gia' sopra
+    conta = {}
+    for riga in log:
+        chiave = ' '.join(riga.split()[1:3])
+        conta[chiave] = conta.get(chiave, 0) + 1
+    print(' | '.join(f'{k}: {v}' for k, v in conta.items()))
     if a.dry_run or a.no_push:
         print('Fine (nessun push).')
         return
