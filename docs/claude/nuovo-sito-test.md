@@ -1,4 +1,4 @@
-﻿# Sito di test automatico: istruzioni per Claude (TU sei il master)
+# Sito di test automatico: istruzioni per Claude (TU sei il master)
 
 Questo file e' scritto per Claude. Quando Mirco chiede un sito di test (anche con frasi spezzate, dialetto, typo), tu sei il master: decidi, scrivi i dati, lanci UN comando e verifichi. Lo script fa il lavoro ripetitivo, tu fai quello che richiede giudizio.
 
