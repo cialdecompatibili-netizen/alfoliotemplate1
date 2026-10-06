@@ -4,9 +4,11 @@ title: project 1
 description: with background image
 img: assets/img/12.jpg
 importance: 1
-category: work
+category: vecchi lavori
 related_publications: true
 in_home: true
+slug: 1-project
+slug_precedenti: [1_project]
 ---
 
 Every project has a beautiful feature showcase page.
