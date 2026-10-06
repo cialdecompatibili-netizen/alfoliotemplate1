@@ -5,7 +5,7 @@ permalink: /projects/
 description: Una collezione in crescita dei tuoi progetti più interessanti.
 nav: true
 nav_order: 3
-display_categories: [work, fun, vecchi lavori]
+display_categories: [work, vecchi lavori, fun]
 horizontal: false
 ---
 
