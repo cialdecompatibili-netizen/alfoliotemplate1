@@ -269,13 +269,36 @@ def verifica_online(owner, nome, pk, minuti):
     if e != 'success':
         return [f"deploy '{e}': guarda gh run list --repo {repo}"]
     problemi = ['(non ancora verificato)']
+    inizio_pages, sbloccato = time.time(), False
     while time.time() < fine:                       # 2) Pages impiega ~1 minuto a pubblicare: si riprova
         problemi = verifica_una_volta(base, pk)
         if not problemi:
             return []
+        if not sbloccato and time.time() - inizio_pages > 150:   # dopo 2,5 minuti ancora niente: Pages puo' essere bloccato
+            sbloccato = sblocca_pages(repo)
         print(f'  ... {len(problemi)} controlli non ancora ok, riprovo tra 20s', flush=True)
         time.sleep(20)
     return problemi
+
+
+def sblocca_pages(repo):
+    """Trovato nel primo giro vero (gelatotest, 06/10/2026): la run 'pages build and deployment' restava in 'waiting'
+    per 8+ minuti (lato GitHub) e il sito online era ancora quello vecchio. Rimedio provato: cancellare la run ferma
+    e chiedere una build nuova (gh api -X POST repos/<repo>/pages/builds) -> online in ~1 minuto.
+    Ritorna True se ha tentato lo sblocco (una volta sola per verifica)."""
+    c, o = sh(['gh', 'run', 'list', '--repo', repo, '--limit', '5', '--json', 'databaseId,status,name'])
+    try:
+        ferme = [r for r in json.loads(o) if r['status'] in ('waiting', 'queued') and 'pages build' in r['name']]
+    except Exception:
+        return False
+    if not ferme:
+        return False
+    for r in ferme:
+        sh(['gh', 'run', 'cancel', str(r['databaseId']), '--repo', repo])
+    time.sleep(5)
+    sh(['gh', 'api', '-X', 'POST', f'repos/{repo}/pages/builds'])
+    print(f"  Pages bloccato ({len(ferme)} run ferme): annullate e richiesta una build nuova", flush=True)
+    return True
 
 
 # ----------------------------------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-# Sito di test automatico: istruzioni per Claude (TU sei il master)
+﻿# Sito di test automatico: istruzioni per Claude (TU sei il master)
 
 Questo file e' scritto per Claude. Quando Mirco chiede un sito di test (anche con frasi spezzate, dialetto, typo), tu sei il master: decidi, scrivi i dati, lanci UN comando e verifichi. Lo script fa il lavoro ripetitivo, tu fai quello che richiede giudizio.
 
@@ -67,4 +67,5 @@ I due script restano usabili da soli: `nuovo_sito.py <repo> [--dry-run] [--priva
 
 - `testbirrificio` fatto a mano in 2 passi e verificato online (200 sulle pagine, demo 404).
 - `sito_test.py --autotest`: 11 errori voluti trovati, nessun falso allarme sul pacchetto birrificio.
-- Giro completo vero di `sito_test.py` con repo nuova: NON ancora provato. Il primo e' il test finale: se trovi un problema, correggilo e annotalo qui.
+- Giro completo vero provato il 06/10/2026 con `gelatotest` (tema gelato, pacchetto minimo): controlli, clone, contenuti OK; verifica online OK dopo lo sblocco di Pages (vedi sotto).
+- **Pages bloccato (trovato con gelatotest, 06/10/2026):** la run 'pages build and deployment' puo' restare in `waiting` per 8+ minuti (lato GitHub) e il sito resta quello vecchio (10 controlli falliti, codice 4). Rimedio, ora automatico in `sblocca_pages()` di `sito_test.py` dopo 2,5 minuti: `gh run cancel <id>` + `gh api -X POST repos/<repo>/pages/builds`. A mano: stessi due comandi, poi `--verifica-solo`.
