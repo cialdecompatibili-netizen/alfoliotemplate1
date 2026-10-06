@@ -42,7 +42,7 @@ def slug_di(titolo):
 
 def esistenti(modulo, sito):
     _, o = auto(modulo, 'elenco', sito=sito)
-    return set(re.findall(r'\[([a-z0-9-]+)\]', o))
+    return set(re.findall(r'\[([a-z0-9_-]+)\]', o))
 
 
 def testo_file(testo):
@@ -81,12 +81,49 @@ def main():
 
     nuovi = {'servizi': {slug_di(x['titolo']) for x in pk.get('servizi', [])},
              'post': {slug_di(x['titolo']) for x in pk.get('post', [])},
-             'progetti': {slug_di(x['titolo']) for x in pk.get('progetti', [])}}
+             'progetti': {slug_di(x['titolo']) for x in pk.get('progetti', [])},
+             'news': set()}
 
     if not a.no_pulisci:
-        for mod in ('servizi', 'post', 'progetti'):
+        for mod in ('servizi', 'post', 'progetti', 'news'):
             for s in sorted(esistenti(mod, a.nome) - nuovi[mod]):
                 esegui(f'{mod} elimina {s}', mod, 'elimina', s, '--si')
+
+    for cart in pk.get('svuota_cartelle', []):  # demo del tema senza modulo (es. _teachings, _books): file .md eliminati
+        for f in sorted((dest / cart).glob('*.md')) if (dest / cart).exists() else []:
+            if not a.dry_run:
+                f.unlink()
+            log.append(f'OK  rimosso {cart}/{f.name}')
+
+    if pk.get('config_descrizione') and not a.dry_run:  # _config.yml: description (riga sotto 'description: >'), a-capo preservati
+        cfg = dest / '_config.yml'
+        righe = cfg.read_bytes().split(b'\n')
+        idx = [i for i, r in enumerate(righe) if r.startswith(b'description: >')]
+        assert len(idx) == 1, 'description: > non trovata in _config.yml'
+        i = idx[0] + 1
+        cr = b'\r' if righe[i].endswith(b'\r') else b''
+        righe[i] = b'  ' + pk['config_descrizione'].encode('utf-8') + cr
+        cfg.write_bytes(b'\n'.join(righe))
+        log.append('OK  _config.yml description')
+
+    if 'gruppi' in pk:  # sezioni di /servizi/ (_data/servizi_gruppi.yml): senza, i servizi finiscono in "Altri servizi"
+        righe = ['# Sezioni della pagina /servizi/, NELL\'ORDINE in cui compaiono (scritto da popola_sito.py).'] + \
+                ['- ' + json.dumps(g, ensure_ascii=False) for g in pk['gruppi']]
+        if not a.dry_run:
+            (dest / '_data' / 'servizi_gruppi.yml').write_bytes(('\r\n'.join(righe) + '\r\n').encode('utf-8'))
+        log.append(f'OK  gruppi servizi: {len(pk["gruppi"])}')
+
+    if 'chi_siamo' in pk:  # chi_siamo.json -> pubblica_chi_siamo.py rigenera _pages/chi-siamo.md
+        if not a.dry_run:
+            (dest / 'chi_siamo.json').write_bytes(json.dumps(pk['chi_siamo'], ensure_ascii=False, indent=2).encode('utf-8'))
+            r = subprocess.run([sys.executable, 'pubblica_chi_siamo.py'], cwd=dest, capture_output=True, text=True,
+                               encoding='utf-8', errors='replace')
+            if r.returncode != 0:
+                sys.exit('STOP su chi-siamo:\n' + ((r.stdout or '') + (r.stderr or ''))[-600:])
+        log.append('OK  chi-siamo rigenerata')
+
+    for pagina, titolo in (pk.get('menu') or {}).items():  # rinomina voci di menu, es. {"agenzia": "Birrificio"}
+        esegui(f'menu {pagina}', 'menu', 'voce', pagina, '--titolo', titolo)
 
     if 'home' in pk:
         home = dict(pk['home'])
@@ -114,10 +151,8 @@ def main():
             esegui(f'{mod} crea {s}', *args)
 
     # output minimo (regola risparmio token): solo il riepilogo per tipo di operazione, gli errori fermano gia' sopra
-    conta = {}
-    for riga in log:
-        chiave = ' '.join(riga.split()[1:3])
-        conta[chiave] = conta.get(chiave, 0) + 1
+    conta = {'operazioni fatte': sum(r.startswith('OK') for r in log),
+             "gia' presenti (saltate)": sum(r.startswith('--') for r in log)}
     print(' | '.join(f'{k}: {v}' for k, v in conta.items()))
     if a.dry_run or a.no_push:
         print('Fine (nessun push).')
