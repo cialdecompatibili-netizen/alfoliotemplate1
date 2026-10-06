@@ -4,6 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 @AGENTS.md
 
+## ORIENTAMENTO RAPIDO (leggi questo per primo)
+
+Se leggi solo questo file, sai gia' dove andare. Trova la tua richiesta e apri SUBITO il file indicato: li' c'e' tutto, non serve altro.
+
+| Mirco chiede... | Apri questi file (in ordine) | Poi |
+|---|---|---|
+| **Un sito di test** ("fai sito di X", "fammi sito giacchetti", clona il template, anche con frasi spezzate) | 1) [docs/claude/nuovo-sito-test.md](docs/claude/nuovo-sito-test.md) (TU SEI IL MASTER: cosa decidi tu e cosa delega lo script) 2) [.agents/skills/sito-test/SKILL.md](.agents/skills/sito-test/SKILL.md) (i passi operativi) 3) un pacchetto d'esempio: `automazioni/testi/pacchetto_gelato.json` (minimo) o `pacchetto_birrificio.json` (completo) | Scrivi `pacchetto_<tema>.json`, lancia `python sito_test.py <tema>test <tema>`, rispondi con il link solo se esce `TUTTO OK`. Niente conferme, niente piani. |
+| Menu, footer, testi pagine, articoli, servizi, progetti | [automazioni/README.md](automazioni/README.md) | `python -m automazioni <modulo> <comando> --dry-run` |
+| Pubblicare servizi | [docs/claude/pubblicare-servizi.md](docs/claude/pubblicare-servizi.md) | `python pubblica_servizi.py ...` |
+| URL, permalink, redirect dei post | [docs/claude/url-post-plugin.md](docs/claude/url-post-plugin.md) | `python verifica_permalink.py` prima di ogni push |
+| SEO, sitemap | [docs/claude/seo-strutturato.md](docs/claude/seo-strutturato.md), [docs/claude/verifica-e-sitemap.md](docs/claude/verifica-e-sitemap.md) | `python verifica_seo.py --build <_site>` |
+| Altro | cerca in `docs/claude/` e nei 'Punti critici' piu' sotto | |
+
+Regole fisse: ogni operazione ripetuta = UNO script Python (vedi REGOLA RISPARMIO TOKEN); file del sito in CRLF, modificarli solo con script Python in binario; prima di modificare, checkpoint `checkpoint-AAAA-MM-GG`; prima di clonare il modello deve essere committato e pushato.
+
 ## Questo progetto (alfoliotemplate1)
 
 - **Repo GitHub:** `cialdecompatibili-netizen/alfoliotemplate1` (modello al-folio ottimizzato per PageSpeed, punto di partenza per i nuovi siti).
