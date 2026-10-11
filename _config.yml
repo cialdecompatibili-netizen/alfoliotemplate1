@@ -293,6 +293,7 @@ exclude:
   - readme_preview/
   - gems/
   - migrations/
+  - modules_source/   # sorgenti dei moduli (admin > Moduli): l'admin li legge da GitHub, non vanno costruiti ne' pubblicati
   - vendor
 keep_files:
   - CNAME
