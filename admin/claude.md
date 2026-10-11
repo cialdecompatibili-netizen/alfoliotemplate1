@@ -1,4 +1,4 @@
-﻿---
+---
 render_with_liquid: false
 sitemap: false
 ---
@@ -333,6 +333,20 @@ data.yml      opzionale -> installato in _data/modules/<slug>.yml
 Il modulo nel suo liquid riceve `include.slug`, `include.assets_url` (con baseurl gia' applicato),
 `include.data` (contenuto di data.yml, puo' essere vuoto).
 
+**Schermate admin di un modulo (chiave `admin` + cartella `admin/`)** - es. il modulo `ecommerce` (Negozio):
+```
+module.json   "admin": { "script": "admin.js", "group": "Negozio", "menu": [ { "p": "ecom", "label": "Prodotti", "icon": "\ud83d\uded2" } ] }
+admin/admin.js   -> installato in admin/modules/<slug>/admin.js; registra A.views.<p> con la sola API pubblica A
+```
+- `admin-modules.js` (`applyAdmin`/`syncAdmin`): se il modulo e' installato E attivo aggiunge il gruppo al menu (prima di "Sito") e carica lo script
+  DA GITHUB (`A.getFile`, quindi subito, senza aspettare il deploy). Disattivato/disinstallato = gruppo nascosto; i DATI non si toccano mai.
+  Il blocco `admin` viene copiato nel registry all'installazione: un modulo installato PRIMA che avesse `admin` va disinstallato e reinstallato.
+- Il primo sync parte da `A.views.dash` (dopo il login admin.js usa il suo `go` interno, non `A.go`) e da `A.go`; la vista Moduli riallinea ad ogni apertura.
+- `roots` nel registry contiene solo indirizzi PUBBLICI (niente `_pages/...`, `_plugins/...`): sono quelli che Configura mostra con Copia.
+- Modulo Negozio: dati in `_data/catalogo.json`. Se NON esiste si usa il demo `_includes/modules/ecommerce/catalogo_demo.json` (sia sul sito, via `_plugins/ecommerce.rb`, sia nell'admin):
+  appena installato parte con prodotti di esempio, alla prima modifica il file nasce e diventa dell'utente. Il bottone **Ripristina demo** (in Prodotti/Categorie)
+  riscrive il file col demo (cancella prodotti e categorie dell'utente; le foto restano). Con file rovinato la vista offre direttamente Ripristina demo.
+  L'interruttore del Negozio e' Moduli > Attiva/Disattiva (NON piu' una chiave in `_config.yml`).
 **Punti critici (da rileggere prima di toccare questi file):**
 - Se un hook dichiarato in module.json non ha il file corrispondente: Jekyll fallisce l'intera
   build ("Could not locate the included file"). `A.mdInstall` controlla PRIMA di scrivere.

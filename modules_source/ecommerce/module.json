@@ -5,7 +5,14 @@
     "footer": "footer.liquid",
     "navbar": "navbar.liquid"
   },
-  "config_fields": [
+  "admin": {
+    "script": "admin.js",
+    "group": "Negozio",
+    "menu": [
+      { "p": "ecom", "label": "Prodotti", "icon": "\ud83d\uded2" },
+      { "p": "ecomcat", "label": "Categorie prodotti", "icon": "\u2630" }
+    ]
+  },  "config_fields": [
     {
       "key": "tracker",
       "type": "text",
